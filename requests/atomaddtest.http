@@ -1,0 +1,48 @@
+//Регистрация нового товара
+POST http://localhost:82/api/atom
+Content-Type: application/json
+
+{
+    "apikey": "ybWLba2jHq8cwJwiDPaTpAK4160G8t4m",
+    "data_matrix_code": "hfgahd0-dd1j37dd-3dd234",
+    "assortment_id": 12423123,
+    "place_type": 1,
+    "place_id": 1234,
+    "admin_id": 1,
+    "expired_at": "21.05.2022"
+}
+
+###
+
+// Изменение местоположения товара
+PATCH http://localhost:82/api/atom/1
+Content-Type: application/json
+
+{
+    "apikey": "ybWLba2jHq8cwJwiDPaTpAK4160G8t4m",
+    "place_type": 1,
+    "place_id": 555,
+    "admin_id": 2
+}
+
+###
+
+//Получение информации о местоположении товара
+GET http://localhost:82/api/atom/1?apikey=ybWLba2jHq8cwJwiDPaTpAK4160G8t4m
+
+
+###
+
+GET http://localhost:82/api/atom/findAll/1/1234?apikey=ybWLba2jHq8cwJwiDPaTpAK4160G8t4m
+
+###
+
+// Изменение местоположения товара
+DELETE http://localhost:82/api/atom/25
+Content-Type: application/json
+
+{
+  "apikey": "ybWLba2jHq8cwJwiDPaTpAK4160G8t4m"
+}
+
+###

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helm.fullname" . }}-nginx-vhost
+  labels:
+    {{- include "helm.labels" . | nindent 4 }}
+data:
+  vhost.conf: |
+    {{- .Files.Get .Values.nginx.vhost_config_path | nindent 4}}

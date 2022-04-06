@@ -1,0 +1,112 @@
+# Default values for helm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+nginx:
+  image:
+    repository: 95.216.8.96:5000/atom/nginx
+    pullPolicy: Always
+  vhost_config_path: "configs/atom.vhost"
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+php_fpm:
+  image:
+    repository: 95.216.8.96:5000/atom/php-fpm
+    pullPolicy: Always
+  resources: {}
+  env: {}
+  configs:
+    content:
+      - name: ".env"
+        data: |
+          APP_NAME=p5s_atom_local
+          APP_ENV=local
+          APP_KEY=qwe123qwe123qwe123qwe
+          APP_DEBUG=true
+          APP_URL=http://localhost:80
+          APP_TIMEZONE=Europe/Moscow
+          API_HTTP_PORT=80
+          API_HTTPS_PORT=445
+          PHPMYADMIN_HTTP_PORT=8090
+          LOG_CHANNEL=errorlog
+          LOG_SLACK_WEBHOOK_URL=
+          MYSQL_ROOT_PASSWORD=AAAABBBB123123tt
+          DB_CONNECTION=mysql
+          DB_HOST=mysql.p5s
+          DB_PORT=3306
+          DB_DATABASE=db_atom_k8stest
+          DB_USERNAME=k8s_atom_user
+          DB_PASSWORD=0FRR0WdvfS
+          CACHE_DRIVER=file
+          QUEUE_CONNECTION=sync
+    map:
+    - subPath: ".env"
+      path: "/var/www/p5s/.env"
+
+imageCredentials:
+  username: p5s-dev-registry
+  password: 2pl5Ekn8cZ
+  registry: 95.216.8.96:5000
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+  hosts:
+    - host: prod-atom.p5s-dev.ru
+      paths:
+        - path: /
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

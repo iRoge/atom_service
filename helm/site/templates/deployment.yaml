@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helm.fullname" . }}
+  labels:
+    {{- include "helm.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "helm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "helm.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: {{ include "helm.fullname" . }}-registry-creds
+      serviceAccountName: {{ include "helm.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: nginx
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            periodSeconds: 30
+            timeoutSeconds: 3
+          resources:
+            {{- toYaml .Values.nginx.resources | nindent 12 }}
+          volumeMounts:
+          {{- if .Values.nginx.volumes }}
+          {{- range .Values.nginx.volumes }}
+          - mountPath: {{ .mount_point }}
+            name: {{ .mount_from }}
+            {{- if .subpath }}
+            subPath: {{ .subpath }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          - mountPath: /etc/nginx/conf.d/vhost.conf
+            name: nginx-vhost
+            subPath: vhost.conf
+        - name: php-fpm
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.php_fpm.image.repository }}:{{ .Values.php_fpm.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.php_fpm.image.pullPolicy }}
+          ports:
+            - name: fastcgi
+              containerPort: 9000
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 9000
+            periodSeconds: 30
+            timeoutSeconds: 3
+          resources:
+            {{- toYaml .Values.php_fpm.resources | nindent 12 }}
+          {{- if .Values.php_fpm.env }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "helm.fullname" . }}-php-envs
+          {{- end }}
+          volumeMounts:
+          {{- if .Values.php_fpm.configs }}
+          {{- range .Values.php_fpm.configs.map }}
+          - mountPath: {{ .path }}
+            name: app-configs
+            subPath: {{ .subPath }}
+          {{- end }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      {{- if .Values.pvc }}
+      {{- range .Values.pvc.claims }}
+      - name: {{ .name }}
+        persistentVolumeClaim:
+          claimName: {{ .name }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.php_fpm.configs }}
+      - configMap:
+          defaultMode: 420
+          name: {{ .Release.Name }}-app-configs
+        name: app-configs
+      {{- end }}
+      - configMap:
+          defaultMode: 420
+          name: {{ include "helm.fullname" . }}-nginx-vhost
+        name: nginx-vhost

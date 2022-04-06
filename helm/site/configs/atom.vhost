@@ -1,0 +1,27 @@
+server {
+    server_name _;
+    listen 80;
+    index index.php;
+    root /var/www/p5s/;
+    proxy_send_timeout 600;
+    proxy_read_timeout 600;
+    send_timeout 600;
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /favicon.ico {
+        access_log off;
+        return 204;
+    }
+    location ~* \.php$ {
+            try_files $uri $uri/ /index.php;
+            fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $document_root/public/$fastcgi_script_name;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+            fastcgi_send_timeout 300;
+            fastcgi_read_timeout 300;
+    }
+}

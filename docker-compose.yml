@@ -1,0 +1,41 @@
+version: '3.3'
+
+services:
+    nginx:
+        image: nginx:stable
+        container_name: nginx
+        ports:
+            - ${API_HTTP_PORT}:81
+            - ${API_HTTPS_PORT}:445
+        volumes:
+            - ./public:/var/www
+            - ./docker/context/Nginx/conf.d/p5s_atom.api.conf:/etc/nginx/conf.d/default.conf
+            - ./docker/context/Nginx/nginx.conf:/etc/nginx/nginx.conf
+        links:
+            - php
+    mysql:
+        image: mysql:latest
+        ports:
+            - ${DB_PORT}:3306
+        container_name: mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+    php:
+        build: ./docker/context/PHP
+        container_name: php-fpm
+        volumes:
+            - ./:/var/www
+        links:
+            - mysql
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        ports:
+            - ${PHPMYADMIN_HTTP_PORT}:80
+        links:
+            - mysql
+        environment:
+          - PMA_HOST=mysql
